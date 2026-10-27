@@ -1,0 +1,39 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        python-version: ["3.9", "3.11", "3.13"]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python-version }}
+      - name: hackathon48 assertion suite
+        run: python eval.py
+      - name: scaffold self-check (generate + verify + idempotence)
+        run: python scaffold.py --selfcheck
+
+  hostile-locale:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
+      - name: Run without UTF-8 mode (LC_ALL=C, no PYTHONUTF8)
+        env:
+          LC_ALL: C
+          LANG: C
+        run: |
+          unset PYTHONUTF8
+          python eval.py
+          python scaffold.py --selfcheck
